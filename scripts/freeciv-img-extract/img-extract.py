@@ -99,7 +99,7 @@ spec_files = {
   ]
 }
 def expand_spec_files(name, file_names):
-  files = [path.join(freeciv_data_dir, name + ".tilespec")]
+  files = [path.join(freeciv_data_dir, f"{name}.tilespec")]
   files.extend([path.join(freeciv_data_dir, name, f) for f in file_names])
   files.extend([path.join(freeciv_data_dir, "misc", f) for f in misc_files])
   return files
@@ -130,7 +130,7 @@ tileset_height = 1030;
 tileset_width = 1800;
 
 dither_types = ["t.l0.desert1", "t.l0.plains1", "t.l0.grassland1", "t.l0.forest1", "t.l0.jungle1", "t.l0.hills1", "t.l0.mountains1", "t.l0.tundra1", "t.l0.swamp1"];
-print("Freeciv-img-extract running with PIL " + Image.__version__);
+print(f"Freeciv-img-extract running with PIL {Image.__version__}");
 tileset = Image.new('RGBA', (tileset_width, tileset_height), (0, 0, 0, 0));
 mask_image = None;
 dither_mask = None;
@@ -138,7 +138,7 @@ dither_map = {};
 tileset_inc = 0;
 
 def config_read(file):
-  print(("Parsing " + file ));
+  print(f"Parsing {file}");
   config = configparser.ConfigParser(strict=False)
   with open (file, "r") as myfile:
     config_text=myfile.read();
@@ -151,7 +151,8 @@ def config_read(file):
     config_text = config_text.replace("         \"unit.auto_settler\"", "  4, 10, \"unit.auto_settler\"");
     config_text = config_text.replace("\t  ;", "\n;");
     config.read_string(config_text);
-    if verbose: print("  found sections: {}".format(config.sections()))
+    if verbose:
+      print(f"  found sections: {config.sections()}")
     return config;
 
 def increment_tileset_image(tileset_name):
@@ -167,7 +168,7 @@ def increment_tileset_image(tileset_name):
   draw = ImageDraw.Draw(tileset)
   draw.text((130, 0), "Freeciv-web - https://github.com/freeciv/freeciv-web  GPL Licensed  - Copyright 2007-2015  Andreas Rosdal", fill="rgb(0,0,0)")
 
-  tileset_file = "freeciv-web-tileset-" + tileset_name + "-" + str(tileset_inc) + ".png"
+  tileset_file = f"freeciv-web-tileset-{tileset_name}-{str(tileset_inc)}.png"
   tileset.save(path.join(out_dir, tileset_file))
   tileset_inc += 1;
 

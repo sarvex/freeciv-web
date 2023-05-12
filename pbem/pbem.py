@@ -81,7 +81,7 @@ def cleanup_expired_games():
     if ((game['time_int'] + game_expire_time) < (time.time())):
       looser = game['players'][game['phase']];
       winner = game['players'][(game['phase']+1) % len(game['players'])];
-      print("Expiring game: " + key + " winner:" + winner + ", looser:" + looser);
+      print(f"Expiring game: {key} winner:{winner}, looser:{looser}");
       # at least 3 turns must be completed before it will effect ranking.
       if (game['turn'] > 4 and len(game['players']) <= 2): save_game_result(winner, winner, looser);
       del status.games[key];
@@ -91,43 +91,44 @@ def cleanup_expired_games():
 def handle_savegame(root, file):
   time.sleep(1);
   filename = os.path.join(root,file)
-  print("Handling savegame: " + filename);
+  print(f"Handling savegame: {filename}");
   txt = None;
   try:
     with lzma.open(filename,  mode="rt") as f:
       txt = f.read().split("\n");
       status.savegames_read += 1;
   except Exception as inst:
-    print("Error loading savegame: " + str(inst));
+    print(f"Error loading savegame: {str(inst)}");
     return;
 
-  new_filename = "pbem_processed_" + str(random.randint(0,10000000000)) + ".xz";
+  new_filename = f"pbem_processed_{random.randint(0, 10000000000)}.xz";
   f.close();
   if not testmode: shutil.move(filename, os.path.join(root,new_filename))
-  print("New filename will be: " + new_filename);
+  print(f"New filename will be: {new_filename}");
   players = list_players(txt);
   phase = find_phase(txt);
   turn = find_turn(txt);
   game_id = find_game_id(txt);
   state = find_state(txt);
-  print("game_id=" + str(game_id));
-  print("phase=" + str(phase));
-  print("turn=" + str(turn));
-  print("state=" + str(state));
-  print("players=" + str(players));
+  print(f"game_id={str(game_id)}");
+  print(f"phase={str(phase)}");
+  print(f"turn={str(turn)}");
+  print(f"state={str(state)}");
+  print(f"players={str(players)}");
 
   if (len(players) <= phase):
     print("skipping savegame, game is over.");
     return;
   active_player = players[phase];
-  print("active_player=" + active_player);
+  print(f"active_player={active_player}");
   active_email = find_email_address(active_player);
-  game_url = "https://" + host + "/webclient/?action=pbem&type=pbem&savegame=" + new_filename.replace(".xz", "");
+  game_url = (f"https://{host}/webclient/?action=pbem&type=pbem&savegame=" +
+              new_filename.replace(".xz", ""));
   if (active_email != None):
     status.games[game_id] = {'turn' : turn, 'phase': phase, 'players' : players, 'time_str' : time.ctime(),
                              'time_int' : int(time.time()), 'state' : state, 'url' : game_url,
                              'active_player_email' : active_email, 'reminder_sent' : False};
-    print("active email=" + active_email);
+    print(f"active email={active_email}");
     mail.send_email_next_turn(active_player, players, active_email, game_url, turn);
     status.emails_sent += 1;
 
@@ -137,36 +138,28 @@ def handle_savegame(root, file):
 
 #Returns the phase (active player number), eg 1
 def find_phase(lines):
-  for l in lines:
-    if ("phase=" in l): return int(l[6:]);
-  return None;
+  return next((int(l[6:]) for l in lines if ("phase=" in l)), None)
 
 #Returns the current turn
 def find_turn(lines):
-  for l in lines:
-    if ("turn=" == l[0:5]): return int(l[5:]);
-  return None;
+  return next((int(l[5:]) for l in lines if l[:5] == "turn="), None)
 
 #Returns the current server state
 def find_state(lines):
-  for l in lines:
-    if ("server_state=" == l[0:13]): return l[18:].replace("\"","");
-  return None;
+  return next(
+      (l[18:].replace("\"", "") for l in lines if l[:13] == "server_state="),
+      None,
+  )
 
 
 #Returns the game id
 def find_game_id(lines):
-  for l in lines:
-    if ("id=" == l[0:3]): return l[4:];
-  return None;
+  return next((l[4:] for l in lines if l[:3] == "id="), None)
 
 
 # Returns a list of active players
 def list_players(lines):
-  players = [];
-  for l in lines:
-    if (l[:4] == "name"): players.append(l[5:].replace("\"", ""));
-  return players;
+  return [l[5:].replace("\"", "") for l in lines if (l[:4] == "name")]
 
 # Returns the emailaddress of the given username
 def find_email_address(user_to_find):
@@ -187,7 +180,7 @@ def find_email_address(user_to_find):
 
 # store game result in database table 'game_results'
 def save_game_result(winner, playerOne, playerTwo):
-  print("saving game result: " + winner + "," + playerOne + "," + playerTwo);
+  print(f"saving game result: {winner},{playerOne},{playerTwo}");
 
   if (playerOne == playerTwo):
     print("Ignoring game result.");
@@ -226,7 +219,7 @@ def process_savegames():
 
 def handle_ranklog(root, file):
   filename = os.path.join(root,file)
-  print("Handling ranklog: " + filename);
+  print(f"Handling ranklog: {filename}");
   openfile = open(filename, 'r')
   lines = "";
   try:
@@ -256,7 +249,7 @@ def handle_ranklog(root, file):
     status.ranklog_emails_sent += 1;
 
   else:
-    print("error: game with winner without email in " + file);
+    print(f"error: game with winner without email in {file}");
   os.remove(filename);
 
 def process_ranklogs():

@@ -20,6 +20,7 @@
 ***********************************************************************'''
 
 
+
 from os import path
 import argparse
 import configparser
@@ -35,7 +36,7 @@ freeciv_dir = args.freeciv
 
 input_name = path.join(freeciv_dir, "data", "stdsounds.soundspec")
 
-print("Parsing " + input_name)
+print(f"Parsing {input_name}")
 config = configparser.ConfigParser()
 config.read(input_name)
 
@@ -50,4 +51,4 @@ with open(output_name, 'w') as f:
 
   f.write("\"last\":null};");
 
-print("Generated " + output_name)
+print(f"Generated {output_name}")

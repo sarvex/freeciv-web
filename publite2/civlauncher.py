@@ -23,8 +23,9 @@ class Civlauncher(Thread):
     def run(self):
         while 1:
             try:
-                print("Start freeciv-web on port " + str(self.new_port) +
-                      " and freeciv-proxy on port " + str(1000 + self.new_port) + ".");
+                print(
+                    f"Start freeciv-web on port {str(self.new_port)} and freeciv-proxy on port {str(1000 + self.new_port)}."
+                );
                 retcode = call(["../publite2/init-freeciv-web.sh"
                                , self.savesdir
                                , str(self.new_port)
@@ -34,10 +35,12 @@ class Civlauncher(Thread):
                                , self.scripttype])
                 self.num_start += 1;
                 if retcode > 0:
-                    print("Freeciv-web port " + str(self.new_port) + " was terminated by signal " + str(retcode))
+                    print(
+                        f"Freeciv-web port {str(self.new_port)} was terminated by signal {str(retcode)}"
+                    )
                     self.num_error += 1;
                 else:
-                    print("Freeciv-web port " + str(self.new_port) + " returned " + str(retcode))
+                    print(f"Freeciv-web port {str(self.new_port)} returned {str(retcode)}")
             except OSError as e:
                 print("Execution failed:", e, file=sys.stderr)
                 self.num_error += 1;

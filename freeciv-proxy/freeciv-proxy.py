@@ -58,7 +58,7 @@ class IndexHandler(web.RequestHandler):
     """Serves the Freeciv-proxy index page """
 
     def get(self):
-        self.write("Freeciv-web websocket proxy, port: " + str(PROXY_PORT))
+        self.write(f"Freeciv-web websocket proxy, port: {str(PROXY_PORT)}")
 
 
 class StatusHandler(web.RequestHandler):
@@ -84,9 +84,9 @@ class WSHandler(websocket.WebSocketHandler):
             login_message = json.loads(message)
             self.username = login_message['username']
             if (not validate_username(self.username)):
-              logger.warn("invalid username: " + str(message))
-              self.write_message("[{\"pid\":5,\"message\":\"Error: Could not authenticate user. If you find a bug, please report it.\",\"you_can_join\":false,\"conn_id\":-1}]")
-              return
+                logger.warn(f"invalid username: {str(message)}")
+                self.write_message("[{\"pid\":5,\"message\":\"Error: Could not authenticate user. If you find a bug, please report it.\",\"you_can_join\":false,\"conn_id\":-1}]")
+                return
             self.civserverport = login_message['port']
             auth_ok = self.check_user(
                     login_message['username'] if 'username' in login_message else None,
@@ -152,10 +152,7 @@ class WSHandler(websocket.WebSocketHandler):
             return "password"
         query = ("select count(*) from servers where port=%(port)s and type='longturn'")
         cursor.execute(query, {'port': self.civserverport})
-        if cursor.fetchall()[0][0] > 0:
-            return "google"
-        else:
-            return "password"
+        return "google" if cursor.fetchall()[0][0] > 0 else "password"
 
     def check_user_password(self, cursor, username, password):
         query = ("select secure_hashed_password, activated from auth where lower(username)=lower(%(usr)s)")
@@ -192,16 +189,15 @@ class WSHandler(websocket.WebSocketHandler):
     # get the civcom instance which corresponds to the requested user.
     def get_civcom(self, username, civserverport, ws_connection):
         key = username + str(civserverport) + ws_connection.id
-        if key not in list(civcoms.keys()):
-            if (int(civserverport) < 5000):
-                return None
-            civcom = CivCom(username, int(civserverport), key, self)
-            civcom.start()
-            civcoms[key] = civcom
-
-            return civcom
-        else:
+        if key in list(civcoms.keys()):
             return civcoms[key]
+        if (int(civserverport) < 5000):
+            return None
+        civcom = CivCom(username, int(civserverport), key, self)
+        civcom.start()
+        civcoms[key] = civcom
+
+        return civcom
 
 
 def validate_username(name):
@@ -217,17 +213,19 @@ if __name__ == "__main__":
 
         if len(sys.argv) == 2:
             PROXY_PORT = int(sys.argv[1])
-        print(('port: ' + str(PROXY_PORT)))
+        print(f'port: {str(PROXY_PORT)}')
 
-        LOG_FILENAME = '../logs/freeciv-proxy-logging-' + str(PROXY_PORT) + '.log'
+        LOG_FILENAME = f'../logs/freeciv-proxy-logging-{str(PROXY_PORT)}.log'
         logging.basicConfig(filename=LOG_FILENAME,level=logging.INFO)
         logger = logging.getLogger("freeciv-proxy")
 
-        application = web.Application([
-            (r'/civsocket/' + str(PROXY_PORT), WSHandler),
-            (r"/", IndexHandler),
-            (r"(.*)status", StatusHandler),
-        ])
+        application = web.Application(
+            [
+                (f'/civsocket/{str(PROXY_PORT)}', WSHandler),
+                (r"/", IndexHandler),
+                (r"(.*)status", StatusHandler),
+            ]
+        )
 
         http_server = httpserver.HTTPServer(application)
         http_server.listen(PROXY_PORT)

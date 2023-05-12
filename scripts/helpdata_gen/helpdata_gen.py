@@ -37,29 +37,29 @@ def removeComments(string):
     return string
 
 def config_read(file):
-  print(("Parsing " + file));
-  config = configparser.ConfigParser(strict=False)
-  with open (file, "r") as myfile:
-    config_text=myfile.read();
-    # These changes are required so that the Python config parser can read Freeciv spec files.
-    config_text = config_text.replace("*include", "#*include");
-    config_text = config_text.replace("\\\"", "'");
-    config_text = config_text.replace("\n\"", "\n \"");
-    config_text = config_text.replace("\n}", "\n }");
-    config_text = config_text.replace("%", "%%");
-    config_text = config_text.replace("\n1", "\n 1");
-    config_text = removeComments(config_text);
-    config_text = config_text.replace("\\\n", "");
-    config_text = config_text.replace("\n_(\"", "_(\"");
-    config_text = config_text.replace("_(\"", "");
-    config_text = config_text.replace("\"),", "<br><br>");
-    config_text = config_text.replace("\")", "");
-    config_text = config_text.replace("\\n", "<br>");
+    print(f"Parsing {file}");
+    config = configparser.ConfigParser(strict=False)
+    with open (file, "r") as myfile:
+      config_text=myfile.read();
+      # These changes are required so that the Python config parser can read Freeciv spec files.
+      config_text = config_text.replace("*include", "#*include");
+      config_text = config_text.replace("\\\"", "'");
+      config_text = config_text.replace("\n\"", "\n \"");
+      config_text = config_text.replace("\n}", "\n }");
+      config_text = config_text.replace("%", "%%");
+      config_text = config_text.replace("\n1", "\n 1");
+      config_text = removeComments(config_text);
+      config_text = config_text.replace("\\\n", "");
+      config_text = config_text.replace("\n_(\"", "_(\"");
+      config_text = config_text.replace("_(\"", "");
+      config_text = config_text.replace("\"),", "<br><br>");
+      config_text = config_text.replace("\")", "");
+      config_text = config_text.replace("\\n", "<br>");
 
-    #print(config_text);
-    config.read_string(config_text);
-    #print((config.sections()));
-    return config;
+      #print(config_text);
+      config.read_string(config_text);
+      #print((config.sections()));
+      return config;
 
 
 input_name = path.join(freeciv_dir, "data", "helpdata.txt")
@@ -83,4 +83,4 @@ with open(output_name, 'w') as f:
                                            indent = 2,
                                            separators = (',', ': ')) + ";\n")
 
-print("Generated " + output_name)
+print(f"Generated {output_name}")

@@ -68,7 +68,7 @@ class StatusHandler(web.RequestHandler):
     invite_to = self.get_argument("to", None, True)
 
     action=self.get_argument("action", None, True)
-    print("request from " + req_ip + " to " + invite_to)
+    print(f"request from {req_ip} to {invite_to}")
     self.ratelimit()
     if (self.mailchecker.last_invitation == invite_to):
       self.set_status(502)

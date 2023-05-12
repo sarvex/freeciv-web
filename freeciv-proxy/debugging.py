@@ -31,19 +31,12 @@ def get_debug_info(civcoms):
     code += "<b>Process Uptime: " + \
         str(int(time.time() - startTime)) + " s.</b><br>"
 
-    code += ("Python version: %s %s (%s)<br>" % (
-        platform.python_implementation(),
-        platform.python_version(),
-        platform.python_build()[0],
-    ))
+    code += f"Python version: {platform.python_implementation()} {platform.python_version()} ({platform.python_build()[0]})<br>"
 
     cpu = ' '.join(platform.processor().split())
-    code += ("Platform: %s %s on '%s' <br>" % (
-        platform.machine(),
-        platform.system(),
-        cpu))
+    code += f"Platform: {platform.machine()} {platform.system()} on '{cpu}' <br>"
 
-    code += ("Tornado version %s <br>" % (tornado_version))
+    code += f"Tornado version {tornado_version} <br>"
     code += ("Number of threads: %i <br>" % (threading.activeCount()))
 
     try:
@@ -55,7 +48,7 @@ def get_debug_info(civcoms):
                  civcoms[key].civserverport,
                  time.time() - civcoms[key].connect_time))
     except:
-        print(("Unexpected error:" + str(sys.exc_info()[0])))
+        print(f"Unexpected error:{str(sys.exc_info()[0])}")
         raise
 
     code += "</div></body></html>"

@@ -23,10 +23,7 @@ freeciv_wiki_doc = {};
 
 # Remove translator qualification from names
 def unqualify(name):
-  if (name.startswith("?")):
-    return name.partition(':')[2];
-  else:
-    return name;
+  return name.partition(':')[2] if (name.startswith("?")) else name
 
 def fix_tech(tech_name):
   tech_name = unqualify(tech_name);
@@ -89,41 +86,37 @@ def fix_tech(tech_name):
 
 def validate_image(image_url):
   return ((".png" in image_url.lower() or ".jpg" in image_url.lower())
-		  and not "Ambox" in image_url
-		  and not "Berthabenzportrait" in image_url
-		  and not "Great_wall_of_china-mutianyu_3" in image_url
-		  and not "Chevalier" in image_url
-		  and not "Nuvola_apps_ksysv" in image_url
-		  and not "mile_Levassor" in image_url
-		  and not "Place_de_la_R" in image_url
-		  and not "Elizabeth" in image_url
-                  and "Writing_systems_worldwide" not in image_url);
+          and "Ambox" not in image_url
+          and "Berthabenzportrait" not in image_url
+          and "Great_wall_of_china-mutianyu_3" not in image_url
+          and "Chevalier" not in image_url
+          and "Nuvola_apps_ksysv" not in image_url
+          and "mile_Levassor" not in image_url
+          and "Place_de_la_R" not in image_url and "Elizabeth" not in image_url
+          and "Writing_systems_worldwide" not in image_url);
 
 def download_wiki_page(tech_name):
-  image_width = 500;
-  max_height = 450;
-
-  print("Downloading wiki data and image: " + tech_name + " -> " + fix_tech(tech_name));
+  print(f"Downloading wiki data and image: {tech_name} -> {fix_tech(tech_name)}");
   page = wikipedia.page(fix_tech(tech_name), auto_suggest=True, redirect=True);
 
-  image = None;
-  # FIXME: page.images seems to be in random order, so we'll get a random image from Wikipedia.
-  for i in range(len(page.images)):
-    if validate_image(page.images[i]):
-      image = page.images[i];
-      break;
-
+  image = next(
+      (page.images[i]
+       for i in range(len(page.images)) if validate_image(page.images[i])),
+      None,
+  )
   if image != None:
     response = requests.get(image)
     img = Image.open(BytesIO(response.content))
+    image_width = 500;
     wpercent = (image_width/float(img.size[0]))
     hsize = int((float(img.size[1])*float(wpercent)))
-    if (hsize > max_height):
-      hsize = max_height;
-    img = img.resize((image_width,hsize), Image.ANTIALIAS)
-    image = page.title + ".jpg";
+    max_height = 450;
 
-    image_file = path.join(webapp_dir, 'images', 'wiki', page.title + '.jpg')
+    hsize = min(hsize, max_height)
+    img = img.resize((image_width,hsize), Image.ANTIALIAS)
+    image = f"{page.title}.jpg";
+
+    image_file = path.join(webapp_dir, 'images', 'wiki', f'{page.title}.jpg')
     img.convert('RGB').save(image_file)
 
   freeciv_wiki_doc[unqualify(tech_name)] = {"title" : page.title, "summary" : page.summary, "image" : image};
@@ -134,11 +127,9 @@ def download_wiki_page(tech_name):
 # ruleset.
 
 input_name = path.join(src_data_dir, 'classic', 'techs.ruleset')
-print("Reading " + input_name)
-f = open(input_name, 'r')
-lines = f.readlines()
-f.close()
-
+print(f"Reading {input_name}")
+with open(input_name, 'r') as f:
+  lines = f.readlines()
 techs = []
 for line in lines:
   if line.startswith("name"):
@@ -146,11 +137,9 @@ for line in lines:
     techs.append(tech_line[1]);
 
 input_name = path.join(src_data_dir, 'classic', 'units.ruleset')
-print("Reading " + input_name)
-f = open(input_name, 'r')
-lines = f.readlines()
-f.close()
-
+print(f"Reading {input_name}")
+with open(input_name, 'r') as f:
+  lines = f.readlines()
 for line in lines:
   if line.startswith("name"):
     tech_line = line.split("\"");
@@ -158,22 +147,18 @@ for line in lines:
     techs.append(tech_line[1]);
 
 input_name = path.join(src_data_dir, 'classic', 'buildings.ruleset')
-print("Reading " + input_name)
-f = open(input_name, 'r')
-lines = f.readlines()
-f.close()
-
+print(f"Reading {input_name}")
+with open(input_name, 'r') as f:
+  lines = f.readlines()
 for line in lines:
   if line.startswith("name"):
     tech_line = line.split("\"");
     techs.append(tech_line[1]);
 
 input_name = path.join(src_data_dir, 'classic', 'governments.ruleset')
-print("Reading " + input_name)
-f = open(input_name, 'r')
-lines = f.readlines()
-f.close()
-
+print(f"Reading {input_name}")
+with open(input_name, 'r') as f:
+  lines = f.readlines()
 for line in lines:
   if line.startswith("name"):
     tech_line = line.split("\"");
@@ -186,7 +171,7 @@ output_name = path.join(webapp_dir, 'javascript', 'freeciv-wiki-doc.js')
 with open(output_name, 'w') as f:
   f.write("var freeciv_wiki_docs = "
           + json.dumps(freeciv_wiki_doc, sort_keys=True, indent=2) + ";\n");
-print("Generated " + output_name)
+print(f"Generated {output_name}")
 
 print("\n*****************************************************")
 print("Please verify manually that the images from Wikipedia")

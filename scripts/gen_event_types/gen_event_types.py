@@ -18,6 +18,7 @@
 
 ***********************************************************************'''
 
+
 from os import path
 import argparse
 import re
@@ -41,9 +42,9 @@ events = {}
 # Naive regexes to match what we want, we are not writing a C interpreter
 start_re_s = r'^(?:.*\{)?[\s,]*'
 end_re_s = r'[\s,};]*$'
-section_name_re = re.compile(start_re_s + r'(E_S_[A-Z0-9_]+)' + end_re_s)
+section_name_re = re.compile(f'{start_re_s}(E_S_[A-Z0-9_]+){end_re_s}')
 section_description_re = re.compile(start_re_s + r'N_\("([^:"]*)[^"]*"\)' + end_re_s)
-empty_description_re = re.compile(start_re_s + r'NULL' + end_re_s)
+empty_description_re = re.compile(f'{start_re_s}NULL{end_re_s}')
 event_number_re = re.compile(r'^#define\s+SPECENUM_VALUE([0-9]+)\s+(E_[A-Z0-9_]+)\s*$')
 event_data_re = re.compile(start_re_s + r'GEN_EV\(\s*' +
                            r'(E_[A-Z0-9_]+)\s*,\s*' +
@@ -70,39 +71,33 @@ def remove_comments(line):
                 in_comment = True
                 return line[:found]
 
-    if found == -1:
-        return line
-    return remove_comments(line)
+    return line if found == -1 else remove_comments(line)
 
 
 input_name = path.join(srcdir, 'events.h')
 with open(input_name, 'r') as f:
-    print("Parsing " + input_name)
+    print(f"Parsing {input_name}")
     for line in f:
         line = remove_comments(line)
-        match = event_number_re.match(line)
-        if match:
+        if match := event_number_re.match(line):
             events[match.group(2)] = {'index': int(match.group(1)),
                                       'name': match.group(2)}
 
 input_name = path.join(srcdir, 'events.c')
 with open(input_name, 'r') as f:
-    print("Parsing " + input_name)
+    print(f"Parsing {input_name}")
     for line in f:
         line = remove_comments(line)
-        match = section_name_re.match(line)
-        if match:
+        if match := section_name_re.match(line):
             section_names.append(match.group(1))
             continue
-        match = section_description_re.match(line)
-        if match:
+        if match := section_description_re.match(line):
             section_descriptions.append(match.group(1))
             continue
         if empty_description_re.match(line):
             section_descriptions.append("Misc")
             continue
-        match = event_data_re.match(line)
-        if match:
+        if match := event_data_re.match(line):
             events[match.group(1)].update(section=match.group(2), description=match.group(3))
 
 # We are going to use some synthetic events for chat, so let's first check
@@ -166,11 +161,19 @@ with open(output_name, 'w') as f:
     print(*('var {0} = {1};'.format(v, i) for i, v in enumerate(section_names)),
           file=f, sep='\n')
     print('\nvar fc_e_section_names = [\n  ', file=f, end='')
-    print(*("'" + s.lower() + "'" for s in section_names),
-          file=f, sep=',\n  ', end='\n];\n')
+    print(
+        *(f"'{s.lower()}'" for s in section_names),
+        file=f,
+        sep=',\n  ',
+        end='\n];\n',
+    )
     print('\nvar fc_e_section_descriptions = [\n  ', file=f, end='')
-    print(*('"' + s + '"' for s in section_descriptions),
-          file=f, sep=',\n  ', end='\n];\n')
+    print(
+        *(f'"{s}"' for s in section_descriptions),
+        file=f,
+        sep=',\n  ',
+        end='\n];\n',
+    )
 
     print(file=f)
     print(*('var {0} = {1};'.format(v['name'], i) for i, v in enumerate(events)),
@@ -185,4 +188,4 @@ var E_I_NAME = 0;
 var E_I_SECTION = 1;
 var E_I_DESCRIPTION = 2;
 ''', file=f)
-    print("Generated " + output_name)
+    print(f"Generated {output_name}")

@@ -47,7 +47,7 @@ class CivCom(Thread):
     def run(self):
         # setup connection to civserver
         if (logger.isEnabledFor(logging.INFO)):
-            logger.info("Start connection to civserver for " + self.username)
+            logger.info(f"Start connection to civserver for {self.username}")
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.setblocking(True)
         self.socket.settimeout(2)
@@ -56,8 +56,8 @@ class CivCom(Thread):
             self.socket.settimeout(0.01)
         except socket.error as reason:
             self.send_error_to_client(
-                "Proxy unable to connect to civserver. Error: %s" %
-                (reason))
+                f"Proxy unable to connect to civserver. Error: {reason}"
+            )
             self.close_connection()
             return
 
@@ -88,24 +88,24 @@ class CivCom(Thread):
 
     def read_from_connection(self):
         try:
-            if (self.socket is not None and not self.stopped):
-                if (self.packet_size == -1):
-                    self.header_buf += self.socket.recv(2 -
-                                                        len(self.header_buf))
-                    if (len(self.header_buf) == 0):
-                        self.close_connection()
-                        return None
-                    if (len(self.header_buf) == 2):
-                        header_pck = unpack('>H', self.header_buf)
-                        self.header_buf = bytearray(0)
-                        self.packet_size = header_pck[0] - 2
-                        if (self.packet_size <= 0 or self.packet_size > 32767):
-                            logger.error("Invalid packet size " + str(self.packet_size))
-                    else:
-                        # complete header not read yet. return now, and read
-                        # the rest next time.
-                        return None
+            if (self.socket is not None and not self.stopped) and (
+                self.packet_size == -1
+            ):
+                self.header_buf += self.socket.recv(2 -
+                                                    len(self.header_buf))
+                if (len(self.header_buf) == 0):
+                    self.close_connection()
+                    return None
+                if len(self.header_buf) != 2:
+                    # complete header not read yet. return now, and read
+                    # the rest next time.
+                    return None
 
+                header_pck = unpack('>H', self.header_buf)
+                self.header_buf = bytearray(0)
+                self.packet_size = header_pck[0] - 2
+                if (self.packet_size <= 0 or self.packet_size > 32767):
+                    logger.error(f"Invalid packet size {str(self.packet_size)}")
             if (self.socket is not None and self.net_buf is not None and self.packet_size > 0):
                 data = self.socket.recv(self.packet_size - len(self.net_buf))
                 if (len(data) == 0):
@@ -193,7 +193,8 @@ class CivCom(Thread):
                     b'\0')
         except:
             self.send_error_to_client(
-                "Proxy unable to communicate with civserver on port " + str(self.civserverport))
+                f"Proxy unable to communicate with civserver on port {str(self.civserverport)}"
+            )
         finally:
             self.civserver_messages = []
 
